@@ -4,5 +4,6 @@ __pycache__
 logs/*
 onnx/*
 .segm_models/*
+segm_models/*
 *.onnx
 filenames.txt
