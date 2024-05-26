@@ -3,13 +3,14 @@
 source /opt/intelpython3/bin/activate
 source segm_models/bin/activate
 
+EXTRA_NAME="CrossEntropyLoss"
 # можно поперебирать batch_size от большего к меньшему
 #for (( i=50; i > 40; i=i-1 ))
 #do
-CPU_TRAIN=true
+CPU_TRAIN=false
 #BATCH=$i
 BATCH=40
-EPOH=10
+EPOH=6
 ENCODER="efficientnet-b0"
 AUGM="hard"
 DSET_NAME="LandCover"
@@ -34,14 +35,16 @@ else
   PYTHON_CPU="--cpu"
 fi
 
+
+
 # ПРИМЕЧАНИЕ: после слова wrap вставлять все строки в одинарных кавычках
 sbatch -n1 \
 --cpus-per-task=8 \
 --mem=45000 \
 $SBATCH_CPU \
--t 20:00:00 \
+-t 10:00:00 \
 --job-name=segm \
---output=./logs/$DSET_NAME"_"$ENCODER"_batch_"$BATCH"_%j" \
+--output=./logs/$DSET_NAME"_"$ENCODER"_batch_"$BATCH"_"$EXTRA_NAME"_%j" \
 \
 --wrap="python3.9 train.py \
 --dataset='/misc/home6/m_imm_freedata/Segmentation/landcover.ai_512' \
@@ -49,8 +52,8 @@ $SBATCH_CPU \
 --model=$MODEL \
 --encoder=$ENCODER \
 --augmentation=$AUGM \
---exp-name=$DSET_NAME'_'$ENCODER'_bsize_'$BATCH'_'$AUGM \
--log './logs/'$CLASS'_'$DSET_NAME \
+--exp-name=$DSET_NAME'_'$ENCODER'_bsize_'$BATCH'_'$AUGM'_'$EXTRA_NAME \
+-log './logs/'$CLASS'_'$DSET_NAME'_'$EXTRA_NAME \
 --workers=1 \
 --epochs=$EPOH \
 --class-list=$CLASS_LIST \

@@ -109,7 +109,9 @@ class SegmentationTrainer:
 
         self.valid_loader['weight'] /= num_elements
 
-        self._loss = smp_utils.losses.DiceLoss()
+        # self._loss = smp_utils.losses.DiceLoss()
+        self._loss = smp_utils.losses.CrossEntropyLoss()
+
         self._metrics = [
             smp_utils.metrics.IoU(threshold=0.5),
         ]
@@ -139,6 +141,8 @@ class SegmentationTrainer:
 
     def start_training(self):
         print(f'Запуск обучения модели с энкодером {self.encoder_name}')
+        loss_name = self._loss.__name__
+
         logs_path = os.path.join(self.log_dir, self.exp_name)
         if not os.path.exists(logs_path):
             os.mkdir(logs_path)
@@ -175,13 +179,13 @@ class SegmentationTrainer:
 
             train_logs = self._train_epoch.run(self._train_loader)
             writer.add_scalar('Accuracy/train', train_logs['iou_score'], i)
-            writer.add_scalar('Loss/train', train_logs['dice_loss'], i)
+            writer.add_scalar('Loss/train', train_logs[loss_name], i)
 
             # Валидация
             if not self.use_only_add_val:  # если в списке есть основной val набор считаем iou по нему
                 valid_logs = self._valid_epoch.run(self.valid_loader['set'])
                 writer.add_scalar(self.valid_loader['name'] + ' iou', valid_logs['iou_score'], i)
-                writer.add_scalar(self.valid_loader['name'] + ' loss', valid_logs['dice_loss'], i)
+                writer.add_scalar(self.valid_loader['name'] + ' loss', valid_logs[loss_name], i)
                 val_iou = valid_logs['iou_score']
                 if self.valid_loader_list is not None:
                     mean_val_iou += valid_logs['iou_score'] * self.valid_loader['weight']
@@ -193,7 +197,7 @@ class SegmentationTrainer:
                     for loader in self.valid_loader_list:
                         valid_logs = self._valid_epoch.run(loader['set'])
                         writer.add_scalar(loader['name'] + ' iou', valid_logs['iou_score'], i)
-                        writer.add_scalar(loader['name'] + ' loss', valid_logs['dice_loss'], i)
+                        writer.add_scalar(loader['name'] + ' loss', valid_logs[loss_name], i)
                         mean_val_iou += valid_logs['iou_score'] * loader['weight']
 
             # считаем либо только по основному набору либо только по доп. наборам
